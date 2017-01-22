@@ -1,3 +1,13 @@
+# Ignore everything but two folders
+/*
+
+# Files to not ignore
+!/.gitignore
+
+# Folders to not ignore
+!/src/hero/
+!/test/
+
 .settings
 bin
 build

@@ -629,7 +629,7 @@ public class BnfReader {
 
     public static void main(String[] args) {
         BnfReader bnfReader = new BnfReader();
-        bnfReader.load("test/grammar.bnf");
+        bnfReader.load("test/pd/grammar.bnf");
         for (Rule rule : bnfReader.rules) {
             System.out.println(rule.toString());
         }

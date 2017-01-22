@@ -69,10 +69,12 @@ public abstract class AbstractPopEvaluator {
         int idxVar = getDataLimits(name);
         if (idxVar != Integer.MAX_VALUE){
             if (k < 0) {
-                return dataTable.get(0)[idxVar];
+                //return dataTable.get(0)[idxVar];
+                return 0.0;
             }
             else if (k >= dataTable.size()) {
-                return dataTable.get(dataTable.size()-1)[idxVar];
+                //return dataTable.get(dataTable.size()-1)[idxVar];
+                return 0.0;
             }
             else {
                 return dataTable.get(k)[idxVar];
@@ -84,10 +86,12 @@ public abstract class AbstractPopEvaluator {
     
     public double getDataTable(int idxVar, int k){
         if (k < 0) {            
-           return dataTable.get(0)[idxVar];
+           //return dataTable.get(0)[idxVar];
+           return 0.0;
         }
         else if (k >= dataTable.size()) {
-            return dataTable.get(dataTable.size()-1)[idxVar];
+            //return dataTable.get(dataTable.size()-1)[idxVar];
+            return 0.0;
         }
         else {
             return dataTable.get(k)[idxVar];

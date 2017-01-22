@@ -24,6 +24,7 @@ import hero.core.problem.Solution;
 import hero.core.problem.Solutions;
 import hero.core.problem.Variable;
 import hero.core.util.random.RandomGenerator;
+import hero.unstable.test.migraine.MigraineTemporalModel;
 
 public class SBXCrossover<V extends Variable<Double>>  extends CrossoverOperator<V> {
 
@@ -46,6 +47,10 @@ public class SBXCrossover<V extends Variable<Double>>  extends CrossoverOperator
     public SBXCrossover(Problem<V> problem) {
         this(problem, DEFAULT_ETA_C, DEFAULT_PROBABILITY);
     } // SBXCrossover
+
+    public SBXCrossover(MigraineTemporalModel problem) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
     public Solutions<V> doCrossover(double probability, Solution<V> parent1, Solution<V> parent2) {
 

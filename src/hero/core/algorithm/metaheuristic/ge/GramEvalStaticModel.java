@@ -107,7 +107,8 @@ public class GramEvalStaticModel extends AbstractProblemGE {
             // And now we evaluate all the solutions with the compiled file:
             predictor = (AbstractPopPredictor) (new MyLoader(compiler.getWorkDir())).loadClass("PopPredictor" + threadId).newInstance();
             for (int i = 0; i < solutions.size(); ++i) {
-                predictor.updatePredictor(dataTable, i);
+// Josue: temporal, uncomment
+//                predictor.updatePredictor(dataTable, i);
                 //double fit = dataTable.computeFIT();
                 double fit = 0.0;
                 for(double[] row : dataTable.getData()) {

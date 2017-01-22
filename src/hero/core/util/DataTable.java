@@ -35,8 +35,7 @@ import hero.core.algorithm.metaheuristic.moge.AbstractProblemGE;
 public class DataTable {
 
     private static final Logger LOGGER = Logger.getLogger(DataTable.class.getName());
-
-    protected AbstractProblemGE problem = null;
+    protected AbstractProblemGE problem;
     protected String path = null;
     protected ArrayList<double[]> data = new ArrayList<>();
     protected int numInputColumns = 0;
@@ -45,7 +44,11 @@ public class DataTable {
     protected double bestFitness = Double.POSITIVE_INFINITY;
 
     public DataTable(AbstractProblemGE problem, String dataPath) throws IOException {
+        this(dataPath);
         this.problem = problem;
+    }
+    
+    public DataTable(String dataPath) throws IOException {
         this.path = dataPath;
         LOGGER.info("Reading data file ...");
         loadData(dataPath);
@@ -60,7 +63,7 @@ public class DataTable {
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;
             }
-            String[] parts = line.split(";");
+            String[] parts = line.split("[\\s,;]+");
             if (parts.length > numInputColumns) {
                 numInputColumns = parts.length;
                 numTotalColumns = numInputColumns + 1;
@@ -73,92 +76,6 @@ public class DataTable {
         }
         reader.close();
     }
-
-    /*public double evaluate(AbstractPopEvaluator evaluator, Solution<Variable<Integer>> solution, int idx) {
-        String functionAsString = problem.generatePhenotype(solution).toString();
-        double fitness = computeFitness(evaluator, idx);
-        if (fitness < bestFitness) {
-            bestFitness = fitness;
-            for (int i = 0; i < numTotalColumns; ++i) {
-                if (i == 0) {
-                    functionAsString = functionAsString.replaceAll("getVariable\\(" + i + ",", "yr\\(");
-                } else if (i == numTotalColumns - 1) {
-                    functionAsString = functionAsString.replaceAll("getVariable\\(" + i + ",", "yp\\(");
-                } else {
-                    functionAsString = functionAsString.replaceAll("getVariable\\(" + i + ",", "u" + i + "\\(");
-                }
-            }
-            LOGGER.info("Best FIT=" + (100 * (1 - bestFitness)) + "; Expresion=" + functionAsString);
-        }
-        return fitness;
-    }*/
-
-    /*public double computeFitness(AbstractPopEvaluator evaluator, int idx) {
-        evaluator.evaluateExpression(idx);
-        ArrayList<double[]> timeTable = evaluator.getDataTable();
-        return computeFitness(timeTable);
-    }*/
-
-   /* public final void normalize(double yL, double yH) {
-        LOGGER.info("Normalizing data in [" + yL + ", " + yH + "] ...");
-        xLs = new double[numInputColumns];
-        xHs = new double[numInputColumns];
-        for (int i = 0; i < numInputColumns; ++i) {
-            xLs[i] = Double.POSITIVE_INFINITY;
-            xHs[i] = Double.NEGATIVE_INFINITY;
-        }
-        // We compute first minimum and maximum values:
-        ArrayList<double[]> fullTable = new ArrayList<>();
-        fullTable.addAll(dataTable);
-        for (int i = 0; i < fullTable.size(); ++i) {
-            double[] row = fullTable.get(i);
-            for (int j = 0; j < numInputColumns; ++j) {
-                if (xLs[j] > row[j]) {
-                    xLs[j] = row[j];
-                }
-                if (xHs[j] < row[j]) {
-                    xHs[j] = row[j];
-                }
-            }
-        }
-
-        // Now we compute "m" and "n", being y = m*x + n
-        // y is the new data
-        // x is the old data
-        double[] m = new double[numInputColumns];
-        double[] n = new double[numInputColumns];
-        for (int j = 0; j < numInputColumns; ++j) {
-            m[j] = (yH - yL) / (xHs[j] - xLs[j]);
-            n[j] = yL - m[j] * xLs[j];
-        }
-        // Finally, we normalize ...
-        for (int i = 0; i < fullTable.size(); ++i) {
-            double[] row = fullTable.get(i);
-            for (int j = 0; j < numInputColumns; ++j) {
-                row[j] = m[j] * row[j] + n[j];
-            }
-        }
-
-        // ... and report the values of both xLs and xHs ...
-        StringBuilder xLsAsString = new StringBuilder();
-        StringBuilder xHsAsString = new StringBuilder();
-        for (int j = 0; j < numInputColumns; ++j) {
-            if (j > 0) {
-                xLsAsString.append(", ");
-                xHsAsString.append(", ");
-            } else {
-                xLsAsString.append("xLs=[");
-                xHsAsString.append("xHs=[");
-            }
-            xLsAsString.append(xLs[j]);
-            xHsAsString.append(xHs[j]);
-        }
-        xLsAsString.append("]");
-        xHsAsString.append("]");
-        LOGGER.info(xLsAsString.toString());
-        LOGGER.info(xHsAsString.toString());
-        LOGGER.info("... done.");
-    }*/
 
     public double computeFIT() {
         double meanXref = 0.0;
@@ -176,6 +93,32 @@ public class DataTable {
         return fit;
     }
 
+    public ArrayList<double[]> getData(ArrayList<Integer> rows, ArrayList<Integer> cols) {
+        ArrayList<double[]> selectedData = new ArrayList<double[]>();        
+        double[] auxData = new double[cols.size()];
+        int auxC = 0;
+        
+        if (rows.size() == 0){
+            for (int t = 0; t < data.size(); t++){
+                rows.add(t);
+            }
+        }
+        if (cols.size() == 0){
+            LOGGER.severe("Please introduce an array that indicates the desired columns.");
+        }
+        for (int i = 0; i < rows.size(); ++i) {
+            auxData = new double[cols.size()];
+            auxC = 0;
+            double[] r = data.get(rows.get(i));
+            for (int j = 0; j < cols.size(); ++j) {
+                auxData[auxC++] = r[cols.get(j)];
+            }
+            selectedData.add(auxData);
+        }
+               
+        return selectedData;
+    }
+    
     public ArrayList<double[]> getData() {
         return data;
     }

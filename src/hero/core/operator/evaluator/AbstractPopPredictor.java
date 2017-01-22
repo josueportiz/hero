@@ -19,7 +19,9 @@
  */
 package hero.core.operator.evaluator;
 
-import hero.core.util.DataTable;
+//import hero.core.util.DataTable;
+/* Josue: temporal change. But we should merge both DatTables */
+import hero.unstable.test.parkinson.DataTable;
 import java.util.ArrayList;
 
 /**
@@ -33,7 +35,9 @@ public abstract class AbstractPopPredictor {
     public static String generateClassHeader(Integer threadId) {
         StringBuilder currentJavaFile = new StringBuilder();
         currentJavaFile.append("import java.util.ArrayList;\n\n");
-        currentJavaFile.append("public class PopPredictor").append(threadId).append(" extends hero.core.operator.evaluator.AbstractPopPredictor {\n");
+// Josue: temporal fix it
+        currentJavaFile.append("import hero.unstable.test.parkinson.DataTable;\n\n");
+        currentJavaFile.append("public abstract class PopPredictor").append(threadId).append(" extends hero.core.operator.evaluator.AbstractPopPredictor {\n");
         return currentJavaFile.toString();
     }
 
