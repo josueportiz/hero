@@ -210,9 +210,10 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
         /* After everything store all the solutions in the last generation
         File to store the best solutions (individuals): */
         String solutionsCSVFileName = properties.getProperty("SolutionsCSVFileName") + 
-                properties.getProperty("Classifier") + "_best_" + properties.getProperty("NumGenerations") + "g";
+                properties.getProperty("Classifier") + "_pareto-front_" + properties.getProperty("NumGenerations") + "g";
         MatrixToFile solutionsAsMatrix = new MatrixToFile(solutionsCSVFileName + ".csv");
-        MatrixToFile bestMetricsAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics.csv");
+        MatrixToFile bestMetricsTrainingAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_train.csv");
+        MatrixToFile bestMetricsTestAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_test.csv");
 
         Solutions<Variable<Boolean>> allSolutions = nsga2.getPopulation();
         
@@ -220,7 +221,8 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
             Solution<Variable<Boolean>> solution = allSolutions.get(i);
             ArrayList <Variable<Boolean>> solutionAsArrayList = solution.getVariables();            
             double[] solutionAsArray = new double[solutionAsArrayList.size()];
-            double[][] metricsTrainTestAsArray = new double[2*solutionAsArrayList.size()][10]; // Mix train (first row) and test results (second row) 
+            double[][] metricsTrainAsArray = new double[solutionAsArrayList.size()][10]; // Mix train (first row) and test results (second row) 
+            double[][] metricsTestAsArray = new double[solutionAsArrayList.size()][10]; // Mix train (first row) and test results (second row) 
 
             // Re-EVALUATE and TEST the BEST solutions to get the results:
             for (int j = 0; j < solutionAsArray.length; j++) {
@@ -239,45 +241,46 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
             try {
                 // TRAINING data:
                 Evaluation result = cls.classify(filteredTrainData);
-                metricsTrainTestAsArray[i] = cls.getMetrics(result);
+                metricsTrainAsArray[i] = cls.getMetrics(result);
                 
                 // TEST data:
                 result = cls.classify(filteredTestData);
-                metricsTrainTestAsArray[2*i+1] = cls.getMetrics(result);
+                metricsTestAsArray[i] = cls.getMetrics(result);
             } catch (Exception ex) {
                 Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
             }
             
             // Store the solution and the metrics:
             solutionsAsMatrix.addRow(solutionAsArray);
-            bestMetricsAsMatrix.addRow(metricsTrainTestAsArray[i]);
-            bestMetricsAsMatrix.addRow(metricsTrainTestAsArray[2*i+1]);
+            bestMetricsTrainingAsMatrix.addRow(metricsTrainAsArray[i]);
+            bestMetricsTestAsMatrix.addRow(metricsTestAsArray[i]);
         }
-            
-            
-        /* After everything is finished, get the non-dominated pareto front: */
-        String soluionsParetoFront = properties.getProperty("SolutionsCSVFileName") + 
-                properties.getProperty("Classifier") + "_pareto-front_" + properties.getProperty("NumGenerations") + "g" + ".csv";
-        MatrixToFile paretoAsMatrix = new MatrixToFile(soluionsParetoFront);
-            
-        Solutions<Variable<Boolean>> nonDominatedSolutions = nsga2.getCurrentSolution();
         
-        // Print them all:
-        logger.info("FOUND " + nonDominatedSolutions.size() + " NON-DOMINATED SOLUTIONS");
-        logger.info("---------------------------------");
-        
-        for (int i = 0; i < allSolutions.size(); ++i) {
-            Solution<Variable<Boolean>> solution = allSolutions.get(i);
-            ArrayList <Variable<Boolean>> solutionAsArrayList = solution.getVariables();            
-            double[] paretoAsArray = new double[solutionAsArrayList.size()];
-
-            for (int j = 0; j < paretoAsArray.length; j++) {
-                paretoAsArray[j] = solutionAsArrayList.get(j).getValue() ? 1.0 : 0.0;
+        if (false){
+            /* After everything is finished, get the non-dominated pareto front: */
+            String soluionsParetoFront = properties.getProperty("SolutionsCSVFileName") +
+                    properties.getProperty("Classifier") + "_pareto-front_" + properties.getProperty("NumGenerations") + "g" + ".csv";
+            MatrixToFile paretoAsMatrix = new MatrixToFile(soluionsParetoFront);
+            
+            Solutions<Variable<Boolean>> nonDominatedSolutions = nsga2.getCurrentSolution();
+            
+            // Print them all:
+            logger.info("FOUND " + nonDominatedSolutions.size() + " NON-DOMINATED SOLUTIONS");
+            logger.info("---------------------------------");
+            
+            for (int i = 0; i < allSolutions.size(); ++i) {
+                Solution<Variable<Boolean>> solution = allSolutions.get(i);
+                ArrayList <Variable<Boolean>> solutionAsArrayList = solution.getVariables();
+                double[] paretoAsArray = new double[solutionAsArrayList.size()];
+                
+                for (int j = 0; j < paretoAsArray.length; j++) {
+                    paretoAsArray[j] = solutionAsArrayList.get(j).getValue() ? 1.0 : 0.0;
+                }
+                logger.info("Non-dominated solution " + i + ". Avg. TRAINING F-value = " + (1-solution.getObjective(0)) + ". Number of features = " + solution.getObjective(1));
+                // Store the solution:
+                paretoAsMatrix.addRow(paretoAsArray);
             }
-            logger.info("Non-dominated solution " + i + ". Avg. TRAINING F-value = " + (1-solution.getObjective(0)) + ". Number of features = " + solution.getObjective(1));
-            // Store the solution:
-            paretoAsMatrix.addRow(paretoAsArray);
         }
-    }       
+    }
 }
     

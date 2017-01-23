@@ -95,7 +95,7 @@ public class wekaClassifier {
     public double[] getMetrics(Evaluation result){
         double[] metrics = new double[10];
         
-        metrics[0] = result.pctCorrect();
+        metrics[0] = result.pctCorrect()/100;
       
         metrics[1] = result.precision(0);
         metrics[2] = result.precision(1);
