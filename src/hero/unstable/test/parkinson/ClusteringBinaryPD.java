@@ -74,7 +74,7 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
             
             // Filter TRAINING data:
             Instances filteredData = data.filterAttributes("training", remainingFeatures);
-           
+
             // Evaluate TRAINING:           
             try {
                 Evaluation result = cls.classify(filteredData);
@@ -85,7 +85,7 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
                 double avgPPV = result.weightedRecall();
                 
                 solution.getObjectives().set(0, 1-avgFValue);
-                solution.getObjectives().set(1, (double)filteredData.numAttributes());
+                //solution.getObjectives().set(1, (double)filteredData.numAttributes());
                 
                 logger.info("Average F-value = " + avgFValue);
                 if (avgFValue > bestAccuracy){
@@ -93,6 +93,10 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
                     logger.info("Number of good solutions found: " + numOfGoodSolutions++);
                     bestAccuracy = avgFValue;
                     bestClassifier = cls;
+                    
+                    // Measure overfitting
+                    logger.info("Overffiting: "+ Math.abs(avgFValue -
+                            cls.classify(data.filterAttributes("test", remainingFeatures)).weightedFMeasure()));                    
                 }            
             } catch (Exception ex) {
                 Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
@@ -207,78 +211,72 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
         Solutions<Variable<Boolean>> solutions = nsga2.execute();
         
         
-        /* After everything store all the solutions in the last generation
-        File to store the best solutions (individuals): */
-        String solutionsCSVFileName = properties.getProperty("SolutionsCSVFileName") + 
-                properties.getProperty("Classifier") + "_pareto-front_" + properties.getProperty("NumGenerations") + "g";
-        MatrixToFile solutionsAsMatrix = new MatrixToFile(solutionsCSVFileName + ".csv");
-        MatrixToFile bestMetricsTrainingAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_train.csv");
-        MatrixToFile bestMetricsTestAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_test.csv");
 
-        Solutions<Variable<Boolean>> allSolutions = nsga2.getPopulation();
-        
-        for (int i = 0; i < allSolutions.size(); ++i) {
-            Solution<Variable<Boolean>> solution = allSolutions.get(i);
-            ArrayList <Variable<Boolean>> solutionAsArrayList = solution.getVariables();            
-            double[] solutionAsArray = new double[solutionAsArrayList.size()];
-            double[][] metricsTrainAsArray = new double[solutionAsArrayList.size()][10]; // Mix train (first row) and test results (second row) 
-            double[][] metricsTestAsArray = new double[solutionAsArrayList.size()][10]; // Mix train (first row) and test results (second row) 
-
-            // Re-EVALUATE and TEST the BEST solutions to get the results:
-            for (int j = 0; j < solutionAsArray.length; j++) {
-                solutionAsArray[j] = solutionAsArrayList.get(j).getValue() ? 1.0 : 0.0;             
+        String[] typesSols = {"pareto-front"};
+        for (String s: typesSols){
+            String solutionsCSVFileName = properties.getProperty("SolutionsCSVFileName") +
+                    properties.getProperty("Classifier") + "_" + s + "_" + properties.getProperty("NumGenerations") + "g";
+            MatrixToFile solutionsAsMatrix = new MatrixToFile(solutionsCSVFileName + ".csv");
+            MatrixToFile bestMetricsTrainingAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_train.csv");
+            MatrixToFile bestMetricsTestAsMatrix = new MatrixToFile(solutionsCSVFileName + "_metrics_test.csv");
+            
+            Solutions<Variable<Boolean>> allSolutions = null; 
+            if (s.equals("best")){
+                /* After everything store all the solutions in the last generation
+                File to store the best solutions (individuals): */
+                //allSolutions = nsga2.getLastGeneration();
+            }
+            else {
+                allSolutions = solutions; // Pareto-front: non dominated solutions
+                logger.info("FOUND " + allSolutions.size() + " NON-DOMINATED SOLUTIONS");
+                logger.info("---------------------------------");           
             }
             
-            // Select features: 
-            List<Integer> remainingFeatures = solutionAsList(solution);
-            
-            
-            // Set TRAINING and TEST data:
-            Instances filteredTrainData = data.filterAttributes("training", remainingFeatures);
-            Instances filteredTestData = data.filterAttributes("test", remainingFeatures);
-            
-            // Evaluate TRAINING and TRAIN:      
-            try {
-                // TRAINING data:
-                Evaluation result = cls.classify(filteredTrainData);
-                metricsTrainAsArray[i] = cls.getMetrics(result);
-                
-                // TEST data:
-                result = cls.classify(filteredTestData);
-                metricsTestAsArray[i] = cls.getMetrics(result);
-            } catch (Exception ex) {
-                Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            // Store the solution and the metrics:
-            solutionsAsMatrix.addRow(solutionAsArray);
-            bestMetricsTrainingAsMatrix.addRow(metricsTrainAsArray[i]);
-            bestMetricsTestAsMatrix.addRow(metricsTestAsArray[i]);
-        }
-        
-        if (false){
-            /* After everything is finished, get the non-dominated pareto front: */
-            String soluionsParetoFront = properties.getProperty("SolutionsCSVFileName") +
-                    properties.getProperty("Classifier") + "_pareto-front_" + properties.getProperty("NumGenerations") + "g" + ".csv";
-            MatrixToFile paretoAsMatrix = new MatrixToFile(soluionsParetoFront);
-            
-            Solutions<Variable<Boolean>> nonDominatedSolutions = nsga2.getCurrentSolution();
-            
-            // Print them all:
-            logger.info("FOUND " + nonDominatedSolutions.size() + " NON-DOMINATED SOLUTIONS");
-            logger.info("---------------------------------");
+            // Declare variables:
+            ArrayList <Variable<Boolean>> solutionAsArrayList = null;
+            double[] solutionAsArray = null;
             
             for (int i = 0; i < allSolutions.size(); ++i) {
                 Solution<Variable<Boolean>> solution = allSolutions.get(i);
-                ArrayList <Variable<Boolean>> solutionAsArrayList = solution.getVariables();
-                double[] paretoAsArray = new double[solutionAsArrayList.size()];
+                  
+                double[][] metricsTrainAsArray = new double[solution.getVariables().size()][10]; // Mix train (first row) and test results (second row)
+                double[][] metricsTestAsArray = new double[solution.getVariables().size()][10]; // Mix train (first row) and test results (second row)
                 
-                for (int j = 0; j < paretoAsArray.length; j++) {
-                    paretoAsArray[j] = solutionAsArrayList.get(j).getValue() ? 1.0 : 0.0;
+                // Re-EVALUATE and TEST the BEST solutions to get the results:
+                // Select features:
+                List<Integer> remainingFeatures = solutionAsList(solution);
+                
+                
+                // Set TRAINING and TEST data:
+                Instances filteredTrainData = data.filterAttributes("training", remainingFeatures);
+                Instances filteredTestData = data.filterAttributes("test", remainingFeatures);
+                
+                // Evaluate TRAINING and TRAIN:
+                try {
+                    // TRAINING data:
+                    Evaluation result = cls.classify(filteredTrainData);
+                    metricsTrainAsArray[i] = cls.getMetrics(result);
+                    
+                    // TEST data:
+                    result = cls.classify(filteredTestData);
+                    metricsTestAsArray[i] = cls.getMetrics(result);
+                } catch (Exception ex) {
+                    Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                logger.info("Non-dominated solution " + i + ". Avg. TRAINING F-value = " + (1-solution.getObjective(0)) + ". Number of features = " + solution.getObjective(1));
-                // Store the solution:
-                paretoAsMatrix.addRow(paretoAsArray);
+                
+                // Store the solution and the metrics:
+                if (s.equals("pareto-front")){
+                    solutionAsArrayList = solution.getVariables();
+                    solutionAsArray = new double[solutionAsArrayList.size()];
+                    for (int j = 0; j < solutionAsArray.length; j++) {
+                        solutionAsArray[j] = solutionAsArrayList.get(j).getValue() ? 1.0 : 0.0;
+                    }
+                    solutionsAsMatrix.addRow(solutionAsArray);
+                    //logger.info("Non-dominated solution " + i + ". Avg. TRAINING F-value = " + (1-solution.getObjective(0)) + ". Number of features = " + solution.getObjective(1));
+                    logger.info("Non-dominated solution " + i + ". Avg. TRAINING F-value = " + (1-solution.getObjective(0)));
+                }
+                bestMetricsTrainingAsMatrix.addRow(metricsTrainAsArray[i]);
+                bestMetricsTestAsMatrix.addRow(metricsTestAsArray[i]);
             }
         }
     }
