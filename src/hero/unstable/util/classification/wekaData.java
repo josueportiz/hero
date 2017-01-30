@@ -14,6 +14,7 @@ import weka.core.converters.ConverterUtils;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.instance.RemovePercentage;
+import weka.filters.unsupervised.instance.Resample;
 
 /**
  *
@@ -88,21 +89,23 @@ public class wekaData {
         //logger.info("Number of attributes: " + data.numAttributes() );
         //logger.info("Number of instances: " + data.numInstances() );
         // Get TRAINING and TEST sets:
-        RemovePercentage splitter = new RemovePercentage();        
-        
+        Resample splitter = new Resample();
         try {
-            splitter.setInvertSelection(true);
-            splitter.setPercentage(percentageClaseControl);
+            splitter.setInvertSelection(false);
+            splitter.setNoReplacement(true);            
+            splitter.setSampleSizePercent(percentageClaseControl);
             splitter.setInputFormat(dataOriginal);
             dataTraining = Filter.useFilter(dataOriginal, splitter);
             
-            splitter = new RemovePercentage();
-            splitter.setPercentage(percentageClaseControl);
+            splitter = new Resample();
+            splitter.setInvertSelection(true);
+            splitter.setNoReplacement(true);
+            splitter.setSampleSizePercent(percentageClaseControl);
             splitter.setInputFormat(dataOriginal);
-            dataTest = Filter.useFilter(dataOriginal, splitter); 
+            dataTest = Filter.useFilter(dataOriginal, splitter);
         } catch (Exception ex) {
             Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
-        }         
+        }      
     }
 
 }

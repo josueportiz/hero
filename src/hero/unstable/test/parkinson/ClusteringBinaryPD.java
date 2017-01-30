@@ -95,8 +95,8 @@ public class ClusteringBinaryPD extends Problem<Variable<Boolean>>  {
                     bestClassifier = cls;
                     
                     // Measure overfitting
-                    logger.info("Overffiting: "+ Math.abs(avgFValue -
-                            cls.classify(data.filterAttributes("test", remainingFeatures)).weightedFMeasure()));                    
+                    logger.info("Overffiting: "+ (avgFValue -
+                            cls.classify(data.filterAttributes("test", remainingFeatures)).fMeasure(1)));//weightedFMeasure()));                    
                 }            
             } catch (Exception ex) {
                 Logger.getLogger(ClusteringBinaryPD.class.getName()).log(Level.SEVERE, null, ex);
